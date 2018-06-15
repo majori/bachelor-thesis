@@ -1,21 +1,30 @@
 const http2 = require('http2');
+const https = require('https');
+const hapi = require('hapi');
 const path = require('path');
 const fs = require('fs');
 
-const server = http2.createSecureServer({
+const setup = require('./setup');
+
+const options = {
   key: fs.readFileSync(path.join(__dirname, '..', 'certs', 'privkey.pem')),
   cert: fs.readFileSync(path.join(__dirname, '..', 'certs', 'cert.pem')),
+};
+
+const server1 = hapi.Server({
+  // Since there are no browsers known that support
+  // unencrypted HTTP/2, the use of `http2.createSecureServer()`
+  // is necessary when communicating with browser clients.
+  listener: http2.createSecureServer(options),
+  port: 8000,
+  tls: true,
 });
 
-server.on('error', (err) => console.error(err));
-
-server.on('stream', (stream, headers) => {
-  // stream is a Duplex
-  stream.respond({
-    'content-type': 'text/html',
-    ':status': 200
-  });
-  stream.end('<h1>Hello World</h1>');
+const server2 = hapi.Server({
+  listener: https.createServer(options),
+  port: 8001,
+  tls: true,
 });
 
-server.listen(8443);
+setup(server1);
+setup(server2);
