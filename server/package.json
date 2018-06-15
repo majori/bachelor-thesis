@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "dev": "nodemon --inspect src/index.js",
     "generate-cert": "openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -keyout certs/privkey.pem -out certs/cert.pem",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
