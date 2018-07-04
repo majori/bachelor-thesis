@@ -6,17 +6,25 @@ const Container = styled.div`
 `;
 
 export default ({ onSubmit, onChange, values }) => {
-  console.log(values);
   return (
     <Container>
       <form onSubmit={onSubmit}>
         <label>
-          Connections
+          Request count
           <input
-            name="connections"
+            name="count"
             type="number"
             onChange={onChange}
-            value={values.connections.toString()}
+            value={values.count.toString()}
+          />
+        </label>
+        <label>
+          Concurrency
+          <input
+            name="concurrency"
+            type="number"
+            onChange={onChange}
+            value={values.concurrency.toString()}
           />
         </label>
         <label>

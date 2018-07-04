@@ -15,7 +15,8 @@ class App extends React.Component {
     super();
     this.state = {
       params: {
-        connections: 1,
+        count: 100,
+        concurrency: 1,
         size: 10,
         delay: 0,
       },
@@ -35,13 +36,21 @@ class App extends React.Component {
 
   async startTestRun(event) {
     event.preventDefault();
-    const { connections, size, delay } = this.state.params;
+    const { concurrency, size, delay, count } = this.state.params;
+
     const query = qs.stringify({ size, delay }, { addQueryPrefix: true });
     const url = `https://localhost:8000/generate${query}`;
-    const requests = _.times(connections, () => fetch(url));
-    const start = Date.now();
-    const responses = await Promise.all(requests);
-    console.log(Date.now() - start);
+
+    let completed = 0;
+    while (completed <= count) {
+      const batch = (count - completed >= concurrency) ? concurrency : count % concurrency;
+      const requests = _.times(batch, () => fetch(url),);
+
+      const start = Date.now();
+      const responses = await Promise.all(requests);
+      console.log(Date.now() - start);
+      completed += batch;
+    }
   }
 
   render() {
