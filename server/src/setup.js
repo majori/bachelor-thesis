@@ -1,5 +1,13 @@
 const Joi = require('joi');
 const crypto = require('crypto')
+const hapi = require('hapi');
+const path = require('path');
+const fs = require('fs');
+
+const options = {
+  key: fs.readFileSync(path.join(__dirname, '..', 'certs', 'privkey.pem')),
+  cert: fs.readFileSync(path.join(__dirname, '..', 'certs', 'cert.pem')),
+};
 
 function handler(request) {      
   const start = Date.now();
@@ -16,12 +24,21 @@ function handler(request) {
 
   return request.query.delay ?
     generatePayload() : 
-    new Promise((resolve, reject) => {
-      setTimeout(() => resolve(generatePayload()), request.query.delay - timeToGenerateBytes)
+    new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(generatePayload(), Math.max(request.query.delay - timeToGenerateBytes));
+      });
     });
 }
 
-module.exports = (server) => {
+module.exports = (listener, port) => {
+  const server = hapi.Server({
+    listener: listener(options),
+    port,
+    tls: true,
+    routes: { cors: true },
+  });
+
   server.route({
     method: 'GET',
     path: '/generate', 
@@ -30,7 +47,7 @@ module.exports = (server) => {
       validate: {
         query: Joi.object().keys({
           size: Joi.number().integer().positive().required(),
-          delay: Joi.number().integer().positive(),
+          delay: Joi.number().integer().positive().allow(0),
         }),
       },
     },
