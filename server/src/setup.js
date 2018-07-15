@@ -12,7 +12,6 @@ const options = {
 function handler(request) {      
   const start = Date.now();
   const bytes = crypto.randomBytes(request.query.size).toString('hex');
-  const timeToGenerateBytes = Date.now() - start;
 
   function generatePayload() {
     return {
@@ -22,12 +21,12 @@ function handler(request) {
     };
   }
 
-  return request.query.delay ?
-    generatePayload() : 
+  return !request.query.delay ?
+    Promise.resolve(generatePayload()) : 
     new Promise((resolve) => {
       setTimeout(() => {
-        resolve(generatePayload(), Math.max(request.query.delay - timeToGenerateBytes));
-      });
+        resolve(generatePayload());
+      }, request.query.delay);
     });
 }
 
