@@ -1,52 +1,68 @@
 import React from "react";
 import styled from 'styled-components';
 
-const Container = styled.div`
+const Form = styled.form`
 
 `;
 
-export default ({ onSubmit, onChange, values }) => {
+export default ({ onSubmit, onChange, values, running }) => {
   return (
-    <Container>
-      <form onSubmit={onSubmit}>
-        <label>
-          Request count
+    <Form className="pure-form pure-form-aligned" onSubmit={onSubmit}>
+      <fieldset>
+        <div className="pure-control-group">
+          <label>Request count</label>
           <input
             name="count"
             type="number"
             onChange={onChange}
             value={values.count.toString()}
           />
-        </label>
-        <label>
-          Concurrency
+        </div>
+      
+        <div className="pure-control-group">
+          <label>Concurrency</label>
           <input
             name="concurrency"
             type="number"
             onChange={onChange}
             value={values.concurrency.toString()}
           />
-        </label>
-        <label>
-          Size
+        </div>
+
+        <div className="pure-control-group">
+          <label>Payload size</label>
           <input
             name="size"
             type="number"
             onChange={onChange}
             value={values.size.toString()}
           />
-        </label>
-        <label>
-          Delay
+          <span className="pure-form-message-inline">kB</span>
+        </div>
+
+        <div className="pure-control-group">
+          <label>Delay</label>
           <input
             name="delay"
             type="number"
             onChange={onChange}
             value={values.delay.toString()}
           />
-        </label>
-        <button type="submit">GO!</button>
-      </form>
-    </Container>
+          <span className="pure-form-message-inline">ms</span>
+        </div>
+
+        <div className="pure-controls">
+          <button
+            className={`
+              pure-button
+              pure-button-primary
+              ${running ? 'pure-button-disabled' : ''}`}
+            type="submit"
+          >
+            GO!
+          </button>
+        </div>
+      </fieldset>
+    </Form>
   );
 };

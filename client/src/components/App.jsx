@@ -6,20 +6,29 @@ import styled from 'styled-components';
 import Controls from './Controls';
 import Stats from './Stats';
 
-
 const Layout = styled.div`
+  .pure-g {
+    justify-content: center;
+  }
 
+  .stats {
+    margin-bottom: 40px;
+  }
+
+  hr {
+    width: 50%;
+  }
 `;
 
 const statsInitState = {
   http1: {
-    loading: false,
+    running: false,
     progress: 0,
     mean: null,
     variance: null,
   },
   http2: {
-    loading: false,
+    running: false,
     progress: 0,
     mean: null,
     variance: null,
@@ -31,19 +40,19 @@ class App extends React.Component {
     super();
     this.state = {
       params: {
-        count: 100,
-        concurrency: 1,
+        count: 1000,
+        concurrency: 10,
         size: 10,
-        delay: 0,
+        delay: 5,
       },
-      stats: statsInitState,
+      stats: _.cloneDeep(statsInitState),
     };
     this.handleParamChange = this.handleParamChange.bind(this);
     this.startTestRun = this.startTestRun.bind(this);
   }
 
-  resetResults() {
-    this.setState({ stats: statsInitState });
+  async resetResults() {
+    return this.setState(_.set(this.state, ['stats'], _.cloneDeep(statsInitState)));
   }
 
   handleParamChange(event) {
@@ -57,14 +66,15 @@ class App extends React.Component {
 
   async startTestRun(event) {
     event.preventDefault();
-    this.resetResults();
+    await this.resetResults();
     await this.runTest(true);
     await this.runTest(false);
   }
 
   async runTest(useHttp1) {
     const version = useHttp1 ? 'http1': 'http2';
-    this.setState(_.set(this.state, ['stats', version, 'loading'], true));
+    console.log(this.state);
+    this.setState(_.set(this.state, ['stats', version, 'running'], true));
     const { concurrency, size, delay, count } = this.state.params;
 
     const query = qs.stringify({ size, delay }, { addQueryPrefix: true });
@@ -100,7 +110,7 @@ class App extends React.Component {
     const variance = _.round(math.var(stats));
 
     this.setState(_.set(this.state, ['stats', version], {
-      loading: false,
+      running: false,
       progress: 0,
       mean,
       variance,
@@ -108,17 +118,23 @@ class App extends React.Component {
   }
 
   render() {
+    const { params, stats } = this.state;
     return (
       <Layout>
-        <div>
-          <Stats stats={this.state.stats.http1}/>
-          <Stats stats={this.state.stats.http2}/>
+        <div className="stats">
+          <Stats stats={stats} />
         </div>
-        <Controls
-          onSubmit={this.startTestRun}
-          onChange={this.handleParamChange}
-          values={this.state.params}
-        />
+        <hr />
+        <div className="controls pure-g">
+          <div className="pure-u">
+            <Controls
+              onSubmit={this.startTestRun}
+              onChange={this.handleParamChange}
+              values={params}
+              running={stats.http1.running || stats.http2.running}
+            />
+          </div>
+        </div>
       </Layout>
     );
   }
