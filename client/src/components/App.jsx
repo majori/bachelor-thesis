@@ -11,6 +11,21 @@ const Layout = styled.div`
 
 `;
 
+const statsInitState = {
+  http1: {
+    loading: false,
+    progress: 0,
+    mean: null,
+    variance: null,
+  },
+  http2: {
+    loading: false,
+    progress: 0,
+    mean: null,
+    variance: null,
+  },
+};
+
 class App extends React.Component {
   constructor() {
     super();
@@ -21,9 +36,14 @@ class App extends React.Component {
         size: 10,
         delay: 0,
       },
+      stats: statsInitState,
     };
     this.handleParamChange = this.handleParamChange.bind(this);
     this.startTestRun = this.startTestRun.bind(this);
+  }
+
+  resetResults() {
+    this.setState({ stats: statsInitState });
   }
 
   handleParamChange(event) {
@@ -37,11 +57,14 @@ class App extends React.Component {
 
   async startTestRun(event) {
     event.preventDefault();
+    this.resetResults();
     await this.runTest(true);
     await this.runTest(false);
   }
 
   async runTest(useHttp1) {
+    const version = useHttp1 ? 'http1': 'http2';
+    this.setState(_.set(this.state, ['stats', version, 'loading'], true));
     const { concurrency, size, delay, count } = this.state.params;
 
     const query = qs.stringify({ size, delay }, { addQueryPrefix: true });
@@ -58,9 +81,10 @@ class App extends React.Component {
       responses.push(await Promise.all(requests));
       durations.push(Date.now() - start);
       completed += batch;
+      this.setState(_.set(this.state, ['stats', version, 'progress'], _.round((completed / count) * 100)))
     }
 
-    // Post-process responses
+    // ### Post-process responses
     const bodys = await Promise.all(_.chain(responses)
       .flatten()
       .map(response => response.json())
@@ -75,15 +99,20 @@ class App extends React.Component {
     const mean = _.round(math.mean(stats));
     const variance = _.round(math.var(stats));
 
-    console.log(`HTTP/${useHttp1 ? '1.1' : '2'}`, { mean, variance });
+    this.setState(_.set(this.state, ['stats', version], {
+      loading: false,
+      progress: 0,
+      mean,
+      variance,
+    }));
   }
 
   render() {
     return (
       <Layout>
         <div>
-          <Stats target="1"/>
-          <Stats target="2"/>
+          <Stats stats={this.state.stats.http1}/>
+          <Stats stats={this.state.stats.http2}/>
         </div>
         <Controls
           onSubmit={this.startTestRun}
