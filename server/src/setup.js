@@ -37,7 +37,10 @@ module.exports = async (listener, port) => {
   if (!(await knex.schema.hasTable('results'))) {
     await knex.schema.createTable('results', (t) => {
       t.increments('id').primary();
-      t.integer('run_id').references('id').inTable('runs');
+      t.integer('run_id')
+        .references('id')
+        .inTable('runs')
+        .onDelete('CASCADE');
       t.integer('duration');
     });
     console.log('Table "results" created');

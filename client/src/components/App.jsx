@@ -25,7 +25,7 @@ const statsInitState = {
     running: false,
     progress: 0,
     mean: null,
-    variance: null,
+    deviation: null,
     min: null,
     max: null,
   },
@@ -33,7 +33,7 @@ const statsInitState = {
     running: false,
     progress: 0,
     mean: null,
-    variance: null,
+    deviation: null,
     min: null,
     max: null,
   },
@@ -101,8 +101,9 @@ class App extends React.Component {
     const query = qs.stringify({ size, delay }, { addQueryPrefix: true });
 
     let completed = 0;
-    const responses = [];
-    const durations = [];
+    const responses = []; // Responses from the server
+    const durations = []; // Durations of the requests
+
     while (completed < count) {
       const batch = (count - completed >= concurrency) ? concurrency : count % concurrency;
       const requests = _.times(batch, () => fetch(
@@ -114,6 +115,8 @@ class App extends React.Component {
       responses.push(await Promise.all(requests));
       durations.push(Date.now() - start);
       completed += batch;
+
+      // Update progress to the state
       this.setState(_.set(this.state, ['stats', version, 'progress'], _.round((completed / count) * 100)))
     }
 
@@ -123,16 +126,19 @@ class App extends React.Component {
       .map(response => response.json())
       .value());
 
+    // Calculate avegare duration which server took to process the requests
     const serverDelay = _.chain(bodys)
       .map((body) => body.end - body.start)
       .mean()
       .round()
       .value();
 
+    // Subtract the avegare server duration from the request durations
+    // to get how much time the requests used between the server and the client
     const stats = _.map(durations, time => time - serverDelay);
 
     const mean = _.round(math.mean(stats));
-    const variance = _.round(math.var(stats));
+    const deviation = _.round(math.std(stats));
     const min = math.min(stats);
     const max = math.max(stats);
 
@@ -140,7 +146,7 @@ class App extends React.Component {
       running: false,
       progress: 0,
       mean,
-      variance,
+      deviation,
       min,
       max,
     }));

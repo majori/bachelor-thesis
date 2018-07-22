@@ -37,10 +37,10 @@ const Stats = ({ stats, waiting }) => {
               <span><b>{stats.mean} ms</b></span>  
             </div>
             <div className="pure-u-1-2 label">
-              <span>Variance:</span>
+              <span>Deviation:</span>
             </div>
             <div className="pure-u-1-2 result">
-              <span><b>{stats.variance} ms</b></span>  
+              <span><b>{stats.deviation} ms</b></span>  
             </div>
             <div className="pure-u-1-2 label">
               <span>Min:</span>
