@@ -98,7 +98,7 @@ class App extends React.Component {
     this.setState(_.set(this.state, ['stats', version, 'running'], true));
     const { concurrency, size, delay, count } = this.state.params;
 
-    const query = qs.stringify({ size, delay }, { addQueryPrefix: true });
+    const query = qs.stringify({ size: size * 1000, delay }, { addQueryPrefix: true });
 
     let completed = 0;
     const responses = []; // Responses from the server
