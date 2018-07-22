@@ -26,18 +26,21 @@ module.exports = async (listener, port) => {
   if (!(await knex.schema.hasTable('runs'))) {
     await knex.schema.createTable('runs', (t) => {
       t.integer('timestamp').primary();
+      t.integer('http_version');
       t.integer('concurrency');
       t.integer('size');
       t.integer('delay');
     });
+    console.log('Table "runs" created');
   }
-
+  
   if (!(await knex.schema.hasTable('results'))) {
     await knex.schema.createTable('results', (t) => {
       t.increments('id').primary();
       t.integer('run_id').references('id').inTable('runs');
       t.integer('duration');
     });
+    console.log('Table "results" created');
   }
 
   server.route({
@@ -82,6 +85,7 @@ module.exports = async (listener, port) => {
         await knex('runs')
           .insert({
             timestamp,
+            http_version: request.payload.version,
             concurrency: request.payload.concurrency,
             size: request.payload.size,
             delay: request.payload.delay,
@@ -103,6 +107,7 @@ module.exports = async (listener, port) => {
       validate: {
         payload: Joi.object().keys({
           concurrency: Joi.number().integer().positive().required(),
+          version: Joi.allow([1, 2]),
           size: Joi.number().integer().positive().required(),
           delay: Joi.number().integer().positive().allow(0),
           durations: Joi.array().items(Joi.number()),

@@ -53,24 +53,40 @@ class App extends React.Component {
     };
     this.handleParamChange = this.handleParamChange.bind(this);
     this.startTestRun = this.startTestRun.bind(this);
+    this.runTestSet = this.runTestSet.bind(this);
   }
 
-  async resetResults() {
-    return this.setState(_.set(this.state, ['stats'], _.cloneDeep(statsInitState)));
+  resetResults() {
+    this.setState(_.set(this.state, ['stats'], _.cloneDeep(statsInitState)));
   }
 
   handleParamChange(event) {
-    this.setState({
-      params: {
-        ...this.state.params,
-        [event.target.name]: +event.target.value,
-      },
-    });
+    this.setState(_.set(this.state, ['params', event.target.name], +event.target.value));
+  }
+
+  async runTestSet() {
+    const concurrency = _.range(0, 110, 10);
+    concurrency[0] = 1;
+    const delay = _.range(0, 110, 10);
+    for (let i1 = 0; i1 < concurrency.length; i1++) {
+      for (let i2 = 0; i2 < delay.length; i2++) {
+        await this.setState({ params: {
+          count: concurrency[i1] * 100,
+          concurrency: concurrency[i1],
+          delay: delay[i2],
+          size: 10,
+        }});
+        await this.startTestRun();
+      }
+    }
   }
 
   async startTestRun(event) {
-    event.preventDefault();
-    await this.resetResults();
+    if (event) {
+      event.preventDefault();
+    }
+
+    this.resetResults();
     await this.runTest(true);
     await this.runTest(false);
   }
@@ -134,6 +150,7 @@ class App extends React.Component {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         concurrency,
+        version: useHttp1 ? 1 : 2,
         size,
         delay,
         durations: stats,
@@ -152,6 +169,7 @@ class App extends React.Component {
         <div className="controls pure-g">
           <div className="pure-u">
             <Controls
+              runTestSet={this.runTestSet}
               onSubmit={this.startTestRun}
               onChange={this.handleParamChange}
               values={params}

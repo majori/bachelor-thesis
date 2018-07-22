@@ -5,7 +5,7 @@ const Form = styled.form`
 
 `;
 
-export default ({ onSubmit, onChange, values, running }) => {
+export default ({ onSubmit, onChange, runTestSet, values, running }) => {
   return (
     <Form className="pure-form pure-form-aligned" onSubmit={onSubmit}>
       <fieldset>
@@ -16,6 +16,7 @@ export default ({ onSubmit, onChange, values, running }) => {
             type="number"
             onChange={onChange}
             value={values.count.toString()}
+            disabled={running}
           />
         </div>
       
@@ -26,6 +27,7 @@ export default ({ onSubmit, onChange, values, running }) => {
             type="number"
             onChange={onChange}
             value={values.concurrency.toString()}
+            disabled={running}
           />
         </div>
 
@@ -36,6 +38,7 @@ export default ({ onSubmit, onChange, values, running }) => {
             type="number"
             onChange={onChange}
             value={values.size.toString()}
+            disabled={running}
           />
           <span className="pure-form-message-inline">kB</span>
         </div>
@@ -47,6 +50,7 @@ export default ({ onSubmit, onChange, values, running }) => {
             type="number"
             onChange={onChange}
             value={values.delay.toString()}
+            disabled={running}
           />
           <span className="pure-form-message-inline">ms</span>
         </div>
@@ -54,12 +58,23 @@ export default ({ onSubmit, onChange, values, running }) => {
         <div className="pure-controls">
           <button
             className={`
-              pure-button
-              pure-button-primary
-              ${running ? 'pure-button-disabled' : ''}`}
+            pure-button
+            pure-button-primary
+            ${running ? 'pure-button-disabled' : ''}`}
             type="submit"
           >
-            GO!
+            Run a single test
+          </button>
+        </div>
+        <div className="pure-controls">
+          <button
+            className={`
+              pure-button
+              ${running ? 'pure-button-disabled' : ''}`}
+            type="button"
+            onClick={runTestSet}
+          >
+            Start automated test set
           </button>
         </div>
       </fieldset>
