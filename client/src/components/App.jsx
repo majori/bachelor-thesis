@@ -26,12 +26,16 @@ const statsInitState = {
     progress: 0,
     mean: null,
     variance: null,
+    min: null,
+    max: null,
   },
   http2: {
     running: false,
     progress: 0,
     mean: null,
     variance: null,
+    min: null,
+    max: null,
   },
 };
 
@@ -73,19 +77,22 @@ class App extends React.Component {
 
   async runTest(useHttp1) {
     const version = useHttp1 ? 'http1': 'http2';
-    console.log(this.state);
+    const baseUrl = `https://localhost:${useHttp1 ? 8000 : 8001}`;
+
     this.setState(_.set(this.state, ['stats', version, 'running'], true));
     const { concurrency, size, delay, count } = this.state.params;
 
     const query = qs.stringify({ size, delay }, { addQueryPrefix: true });
-    const url = `https://localhost:${useHttp1 ? 8000 : 8001}/generate${query}`;
 
     let completed = 0;
     const responses = [];
     const durations = [];
     while (completed < count) {
       const batch = (count - completed >= concurrency) ? concurrency : count % concurrency;
-      const requests = _.times(batch, () => fetch(url, { headers: { 'Content-Type': 'application/json' }}));
+      const requests = _.times(batch, () => fetch(
+        `${baseUrl}/generate${query}`,
+        { headers: { 'Content-Type': 'application/json' } },
+      ));
 
       const start = Date.now();
       responses.push(await Promise.all(requests));
@@ -103,18 +110,35 @@ class App extends React.Component {
     const serverDelay = _.chain(bodys)
       .map((body) => body.end - body.start)
       .mean()
+      .round()
       .value();
 
     const stats = _.map(durations, time => time - serverDelay);
+
     const mean = _.round(math.mean(stats));
     const variance = _.round(math.var(stats));
+    const min = math.min(stats);
+    const max = math.max(stats);
 
     this.setState(_.set(this.state, ['stats', version], {
       running: false,
       progress: 0,
       mean,
       variance,
+      min,
+      max,
     }));
+
+    await fetch(`${baseUrl}/save${query}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        concurrency,
+        size,
+        delay,
+        durations: stats,
+      })
+    })
   }
 
   render() {

@@ -31,16 +31,28 @@ const Stats = ({ stats, waiting }) => {
           </span> :
           <div className="results pure-g">
             <div className="pure-u-1-2 label">
-              <span>Mean: </span>
+              <span>Mean:</span>
             </div>
             <div className="pure-u-1-2 result">
               <span><b>{stats.mean} ms</b></span>  
             </div>
             <div className="pure-u-1-2 label">
-              <span>Variance: </span>
+              <span>Variance:</span>
             </div>
             <div className="pure-u-1-2 result">
               <span><b>{stats.variance} ms</b></span>  
+            </div>
+            <div className="pure-u-1-2 label">
+              <span>Min:</span>
+            </div>
+            <div className="pure-u-1-2 result">
+              <span><b>{stats.min} ms</b></span>  
+            </div>
+            <div className="pure-u-1-2 label">
+              <span>Max:</span>
+            </div>
+            <div className="pure-u-1-2 result">
+              <span><b>{stats.max} ms</b></span>  
             </div>
           </div>
       }
