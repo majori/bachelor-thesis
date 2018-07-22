@@ -4,12 +4,46 @@ const hapi = require('hapi');
 const path = require('path');
 const fs = require('fs');
 
-const options = {
-  key: fs.readFileSync(path.join(__dirname, '..', 'certs', 'privkey.pem')),
-  cert: fs.readFileSync(path.join(__dirname, '..', 'certs', 'cert.pem')),
-};
+const knex = require('knex')({
+  client: 'sqlite3',
+  connection: {
+    filename: path.join(__dirname, '..', 'results.sqlite'),
+  },
+  useNullAsDefault: true
+});
 
-function handler(request) {      
+module.exports = async (listener, port) => {
+  const server = hapi.Server({
+    listener: listener({
+      key: fs.readFileSync(path.join(__dirname, '..', 'certs', 'privkey.pem')),
+      cert: fs.readFileSync(path.join(__dirname, '..', 'certs', 'cert.pem')),
+    }),
+    port,
+    tls: true,
+    routes: { cors: true },
+  });
+
+  if (!(await knex.schema.hasTable('runs'))) {
+    await knex.schema.createTable('runs', (t) => {
+      t.integer('timestamp').primary();
+      t.integer('concurrency');
+      t.integer('size');
+      t.integer('delay');
+    });
+  }
+
+  if (!(await knex.schema.hasTable('results'))) {
+    await knex.schema.createTable('results', (t) => {
+      t.increments('id').primary();
+      t.integer('run_id').references('id').inTable('runs');
+      t.integer('duration');
+    });
+  }
+
+  server.route({
+    method: 'GET',
+    path: '/generate', 
+    handler: (request) => {      
   const start = Date.now();
   const bytes = crypto.randomBytes(request.query.size).toString('hex');
 
@@ -28,20 +62,7 @@ function handler(request) {
         resolve(generatePayload());
       }, request.query.delay);
     });
-}
-
-module.exports = (listener, port) => {
-  const server = hapi.Server({
-    listener: listener(options),
-    port,
-    tls: true,
-    routes: { cors: true },
-  });
-
-  server.route({
-    method: 'GET',
-    path: '/generate', 
-    handler,
+    },
     options: {
       validate: {
         query: Joi.object().keys({
@@ -52,8 +73,43 @@ module.exports = (listener, port) => {
     },
   });
 
-  server.start(err => {
-    if (err) console.error(err)
-    console.log(`Started ${server.connections.length} connections`)
+  server.route({
+    method: 'POST',
+    path: '/save', 
+    handler: async (request) => {
+      const timestamp = Date.now()
+      try {
+        await knex('runs')
+          .insert({
+            timestamp,
+            concurrency: request.payload.concurrency,
+            size: request.payload.size,
+            delay: request.payload.delay,
+          });
+
+        await knex('results')
+          .insert(request.payload.durations.map(duration => ({
+            run_id: timestamp,
+            duration,
+          })));
+
+        return 'OK';
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    options: {
+      validate: {
+        payload: Joi.object().keys({
+          concurrency: Joi.number().integer().positive().required(),
+          size: Joi.number().integer().positive().required(),
+          delay: Joi.number().integer().positive().allow(0),
+          durations: Joi.array().items(Joi.number()),
+        }),
+      },
+    },
   });
+
+  server.start();
 };

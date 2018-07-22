@@ -3,5 +3,9 @@ const https = require('https');
 
 const setup = require('./setup');
 
-setup(https.createServer, 8000);
-setup(http2.createSecureServer, 8001);
+async function main() {
+  await setup(https.createServer, 8000);
+  await setup(http2.createSecureServer, 8001);
+}
+
+main();
