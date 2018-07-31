@@ -65,9 +65,9 @@ class App extends React.Component {
   }
 
   async runTestSet() {
-    const concurrency = _.range(0, 110, 10);
+    const concurrency = _.range(0, 105, 5);
     concurrency[0] = 1;
-    const delay = _.range(0, 110, 10);
+    const delay = _.range(0, 105, 5);
     for (let i1 = 0; i1 < concurrency.length; i1++) {
       for (let i2 = 0; i2 < delay.length; i2++) {
         await this.setState({ params: {
