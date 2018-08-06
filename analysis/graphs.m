@@ -40,50 +40,54 @@ for version = 1:2
     
 %%  Mean
 
-    figure;
-    surf(X,Y,Z_mean);
-    title(strcat(protocol, ': mean duration of requests'));
-    xlabel('Concurrency');
-    ylabel('Delay');
-    zlabel('Mean duration');
+    fig=figure;
+    pcolor(X,Y,Z_mean);
+    title(strcat(protocol, ': pyyntöerien keston keskiarvo'));
+    xlabel('Rinnakkaisuus');
+    ylabel('Viive (ms)');
+    zlabel('Keston keskiarvo (ms)');
     max_mean = max([max_mean, max(Z_mean)]);
-    colorbar;
+    hc = colorbar;
+    title(hc,'ms');
     caxis([0, max_mean]);
     colormap jet
+    saveas(fig, strcat('http', num2str(version), '_mean'), 'png');
     
 %% Standard deviation
 
-    figure;
-    surf(X,Y,Z_deviation);
-    title(strcat(protocol, ': standard deviation of request duration'));
-    xlabel('Concurrency');
-    ylabel('Delay');
-    zlabel('Standard deviation of duration');
+    fig=figure;
+    pcolor(X,Y,Z_deviation);
+    title(strcat(protocol, ': pyyntöerien keston keskihajonta'));
+    xlabel('Rinnakkaisuus');
+    ylabel('Viive (ms)');
+    zlabel('Keston keskihajonta (ms)');
     max_deviation = max([max_deviation, max(Z_deviation)]);
-    colorbar;
+    hc = colorbar;
+    title(hc,'ms');
     caxis([0, max_deviation]);
     colormap jet
+    saveas(fig, strcat('http', num2str(version), '_deviation'), 'png');
     
 %% Maximum
 
-    figure;
-    surf(X,Y,Z_max);
-    title(strcat(protocol, ': maximum duration of request batch'));
-    xlabel('Concurrency');
-    ylabel('Delay');
-    zlabel('Maximum duration');
-    colorbar;
-    colormap jet
+%     figure;
+%     surf(X,Y,Z_max);
+%     title(strcat(protocol, ': maximum duration of request batch'));
+%     xlabel('Concurrency');
+%     ylabel('Delay');
+%     zlabel('Maximum duration');
+%     colorbar;
+%     colormap jet
 
 %% Minimum
 
-    figure;
-    surf(X,Y,Z_min);
-    title(strcat(protocol, ': minimum duration of request batch'));
-    xlabel('Concurrency');
-    ylabel('Delay');
-    zlabel('Minimum duration');
-    colorbar;
-    colormap jet
+%     figure;
+%     surf(X,Y,Z_min);
+%     title(strcat(protocol, ': minimum duration of request batch'));
+%     xlabel('Concurrency');
+%     ylabel('Delay');
+%     zlabel('Minimum duration');
+%     colorbar;
+%     colormap jet
 
 end
