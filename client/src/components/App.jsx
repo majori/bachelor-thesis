@@ -92,17 +92,18 @@ class App extends React.Component {
   }
 
   async runTest(useHttp1) {
+    // Initialize
+    const { concurrency, size, delay, count } = this.state.params;
     const version = useHttp1 ? 'http1': 'http2';
     const baseUrl = `https://localhost:${useHttp1 ? 8000 : 8001}`;
-
     this.setState(_.set(this.state, ['stats', version, 'running'], true));
-    const { concurrency, size, delay, count } = this.state.params;
 
+    // Construct query parameters for requests
     const query = qs.stringify({ size: size * 1000, delay }, { addQueryPrefix: true });
 
-    let completed = 0;
+    let completed = 0; // Amount of requests completed
     const responses = []; // Responses from the server
-    const durations = []; // Durations of the requests
+    const durations = []; // Calculated durations of the requests on the client side
 
     while (completed < count) {
       const batch = (count - completed >= concurrency) ? concurrency : count % concurrency;
@@ -120,7 +121,7 @@ class App extends React.Component {
       this.setState(_.set(this.state, ['stats', version, 'progress'], _.round((completed / count) * 100)))
     }
 
-    // ### Post-process responses
+    // Parse payload from all responses
     const bodys = await Promise.all(_.chain(responses)
       .flatten()
       .map(response => response.json())
@@ -137,11 +138,13 @@ class App extends React.Component {
     // to get how much time the requests used between the server and the client
     const stats = _.map(durations, time => time - serverDelay);
 
+    // Calculate stats
     const mean = _.round(math.mean(stats));
     const deviation = _.round(math.std(stats));
     const min = math.min(stats);
     const max = math.max(stats);
 
+    // Show results of test run for the user
     this.setState(_.set(this.state, ['stats', version], {
       running: false,
       progress: 0,
@@ -151,6 +154,7 @@ class App extends React.Component {
       max,
     }));
 
+    // Save test result to backend's database
     await fetch(`${baseUrl}/save${query}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
